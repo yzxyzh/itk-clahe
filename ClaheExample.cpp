@@ -33,59 +33,57 @@ int main( int argc, char * argv[] )
 {
   if( argc != 9 ) 
   { 
-    std::cerr << "Usage: " << std::endl;
-    std::cerr << argv[0] << " inputImageFile outputImageFile GrayMin, GrayMax, NbRegionsX, NbRegionsY, NbBins, ClipLimit" << std::endl;
+    std::cerr << "Usage: " << std::endl
+              << argv[0] << " inputImageFile outputImageFile GrayMin GrayMax "
+              << std::endl
+              << "NbRegionsX NbRegionsY NbBins ClipLimit"
+              << std::endl;
+    
     return EXIT_FAILURE;
   }
   
+  typedef unsigned char InputPixelType;
+  typedef unsigned char OutputPixelType;
   
-  //  Software Guide : BeginLatex
-  //
-  //  The image types are instantiated using pixel type and dimension.
-  //
-  //  Software Guide : EndLatex 
-
-  // Software Guide : BeginCodeSnippet
-  typedef    unsigned char    InputPixelType;
-  typedef    unsigned char    OutputPixelType;
-
-  typedef itk::Image< InputPixelType,  2 >   InputImageType;
-  typedef itk::Image< OutputPixelType, 2 >   OutputImageType;
-  // Software Guide : EndCodeSnippet
-
-
-  typedef itk::ImageFileReader< InputImageType >  ReaderType;
-  
-  
+  typedef itk::Image<InputPixelType, 2> InputImageType;
+  typedef itk::Image<OutputPixelType, 2> OutputImageType;
+  typedef itk::ImageFileReader<InputImageType>  ReaderType;
   typedef ClaheITK<InputImageType> FilterType;
-  FilterType* filter = new FilterType();
+  
+  FilterType* pFilter = new FilterType();
   
   ReaderType::Pointer reader = ReaderType::New();
   reader->SetFileName( argv[1] );
   
-  filter->setGrayLevelMin( static_cast<InputPixelType>(atoi(argv[3])) );
-  filter->setGrayLevelMax( static_cast<InputPixelType>(atoi(argv[4])) );
-  filter->setNbRegionsX( static_cast<unsigned int>(atoi(argv[5])) );
-  filter->setNbRegionsY( static_cast<unsigned int>(atoi(argv[6])) );
-  filter->setNbBins( static_cast<unsigned int>(atoi(argv[7])) );
-  filter->setCliplimit( atof(argv[8]) );
+  pFilter->setGrayLevelMin( static_cast<InputPixelType>(atoi(argv[3])) );
+  pFilter->setGrayLevelMax( static_cast<InputPixelType>(atoi(argv[4])) );
+  pFilter->setNbRegionsX( static_cast<unsigned int>(atoi(argv[5])) );
+  pFilter->setNbRegionsY( static_cast<unsigned int>(atoi(argv[6])) );
+  pFilter->setNbBins( static_cast<unsigned int>(atoi(argv[7])) );
+  pFilter->setCliplimit( atof(argv[8]) );
   
   //
   // This filter beaks the streaming pipeline. Therefore we must "update"
-  // the reader before giving it to 
+  // the reader (i.e. execute it completely) before giving it to the reader.
+  //
   reader->Update();
-  filter->SetInput(reader->GetOutput());
+  pFilter->SetInput(reader->GetOutput());
   
-  typedef unsigned char                          WritePixelType;
-  typedef itk::Image< WritePixelType, 2 >        WriteImageType;
+  //
+  // ... and we must "update" the filter (i.e. execute it completely) before
+  // giving it to someone else, here the writer.
+  //
+  pFilter->Update();
+  
+  //
+  // Write the output file.
+  //
+  typedef unsigned char WritePixelType;
+  typedef itk::Image<WritePixelType, 2>        WriteImageType;
   typedef itk::ImageFileWriter< WriteImageType >  WriterType;
   WriterType::Pointer writer = WriterType::New();
-  std::cerr << "================ argv[2] = " << argv[2] << std::endl;
-  
   writer->SetFileName( argv[2] );
-  
-  filter->Update();
-  writer->SetInput( filter->GetOutput() );
+  writer->SetInput( pFilter->GetOutput() );
   writer->Update();
   
   return EXIT_SUCCESS;

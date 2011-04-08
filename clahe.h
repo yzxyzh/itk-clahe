@@ -3,6 +3,27 @@
   \date 8 april 2011
   \author Francis Girard
   
+  Copyright (C) 2010 Francis Girard
+  
+  GNU LESSER GENERAL PUBLIC LICENSE
+  Version 3, 29 June 2007
+  
+  Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
+  
+  Everyone is permitted to copy and distribute verbatim copies of this license
+  document, but changing it is not allowed.
+  
+  This version of the GNU Lesser General Public License incorporates the terms
+  and conditions of version 3 of the GNU General Public License, supplemented by
+  the additional permissions listed below.
+  
+  The precise terms and conditions for copying, distribution and modification
+  may be found here:
+  
+  http://www.gnu.org/licenses/lgpl.html
+  
+  
+  
   Contrast Limited Adaptive Histogram Equalization
   
   Adapted from original Karel Zuiderveld's code for ITK with minor
@@ -142,7 +163,6 @@ class ClaheImpl
     
     /* max. # contextual regions in y-direction */
     static const unsigned int uiMAX_REG_Y = 16;
-
 };
 
 
@@ -375,20 +395,17 @@ inline int ClaheImpl<T_Pixel>::wrapedExecute
   //
   if (nReturnCode == 0 && bRealloc)
   {
-    std::cerr << "Copy back to the original image" << std::endl;
     T_Pixel* pImageNewIt = pImageNew;
     T_Pixel* pImageIt = pImage;
     
     //
     // Skip the upper lines that we did insert.
     //
-    std::cerr << "nUpToInsert = " << nUpToInsert << std::endl;
     pImageNewIt += (nNewWidth * nUpToInsert);
     
     //
     // Copy the original lines, skipping inserted pixels at left and at right
     //
-    std::cerr << "Copy the original lines, skipping inserted pixels at left and at right" << std::endl;
     unsigned int nIdx = 0;
     unsigned int nSubIdx = 0;
     for ( ; nIdx < uiYRes; nIdx++)
@@ -412,7 +429,6 @@ inline int ClaheImpl<T_Pixel>::wrapedExecute
     // (Useless and therefore commented out).
     //
     // pImageNewIt += (nNewWidth * nBottomToInsert);
-    std::cerr << "Skip the lower lines that we did insert. (Useless)" << std::endl;
   }
   
   return nReturnCode;
@@ -541,7 +557,6 @@ inline int ClaheImpl<T_Pixel>::execute
   uiYSize = uiYRes / uiNrY;
   ulNrPixels = (unsigned long)uiXSize * (unsigned long)uiYSize;
   
-  
   /* Calculate actual cliplimit	 */
   if(fCliplimit > 0.0)
   {
@@ -556,18 +571,13 @@ inline int ClaheImpl<T_Pixel>::execute
   
   
   /* Make lookup table for mapping of greyvalues */
-  std::cerr << "Making LUT" << std::endl;
   _makeLut(aLUT, Min, Max, uiNrBins);
-  std::cerr << "LUT Made with Min = " << Min << " Max = " << Max << " uiNrBins = " << uiNrBins << std::endl;
   
   /* Calculate greylevel mappings for each contextual region */
-  std::cerr << "Calculate greylevel mappings for each contextual region uiNrY = " << uiNrY << std::endl;
   for (uiY = 0, pImPointer = pImage; uiY < uiNrY; uiY++)
   {
-    std::cerr << "Processing uiY = " << uiY << std::endl;
     for (uiX = 0; uiX < uiNrX; uiX++, pImPointer += uiXSize)
     {
-      std::cerr << "Processing uiX = " << uiX << std::endl;
       pulHist = &pulMapArray[uiNrBins * (uiY * uiNrX + uiX)];
       _makeHistogram(pImPointer, uiXRes, uiXSize, uiYSize,
                      pulHist, uiNrBins, aLUT);
@@ -580,7 +590,6 @@ inline int ClaheImpl<T_Pixel>::execute
   
   
   /* Interpolate greylevel mappings to get CLAHE image */
-  std::cerr << "Interpolate greylevel mappings to get CLAHE image" << std::endl;
   for (pImPointer = pImage, uiY = 0; uiY <= uiNrY; uiY++)
   {
     /* special case: top row */
@@ -647,15 +656,17 @@ inline int ClaheImpl<T_Pixel>::execute
   }
   
   /* free space for histograms */
-  std::cerr << "free space for histograms" << std::endl;
   free(pulMapArray);
   
   /* return status OK */
-  std::cerr << "return 0" << std::endl;
   return 0;
 }
 
 
+/**
+  Compute the integral power of an integral base.
+  FIXME: Use so math lib for this!
+*/
 template<typename T_Pixel>
 inline unsigned int ClaheImpl<T_Pixel>::_pow
 (
@@ -674,6 +685,10 @@ inline unsigned int ClaheImpl<T_Pixel>::_pow
 
 
 /**
+  FIXME: This will spin forever for very small values of the clipping limit,
+         that is when there is a lot of pixels in excess, i.e. more to
+         redistribute than available space ...
+  
   Performs clipping of the histogram and redistribution of bins.
   The histogram is clipped and the number of excess pixels is counted.
   Afterwards the excess pixels are equally redistributed across the whole
