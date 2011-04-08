@@ -1,0 +1,12 @@
+PROJECT(ClaheExample)
+
+FIND_PACKAGE(ITK)
+IF(ITK_FOUND)
+  INCLUDE(${ITK_USE_FILE})
+ELSE(ITK_FOUND)
+  MESSAGE(FATAL_ERROR
+          "ITK not found. Please set ITK_DIR")
+ENDIF(ITK_FOUND)
+
+ADD_EXECUTABLE(ClaheExample ClaheExample.cpp)
+TARGET_LINK_LIBRARIES(ClaheExample ITKCommon ITKIO)
