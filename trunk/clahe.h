@@ -65,42 +65,70 @@
 
 
 /**
-  Implementation of the CLAHE algorithm as described by Karel Zuiderveld.
+  Applies Clahe to an ITK image to produce another image.
 */
-template<typename T_Pixel>
-class ClaheImpl
+template<typename T_ItkImage>
+class ClaheITK
 {
   public:
     
-    inline ClaheImpl();
+    typedef typename T_ItkImage::PixelType T_Pixel;
+    typedef typename T_ItkImage::Pointer T_ItkImagePointer;
+    typedef typename T_ItkImage::RegionType T_RegionType;
+    typedef typename T_ItkImage::SizeType T_SizeType;
     
-    inline int execute
-    (
-      T_Pixel* pImage,
-      unsigned int uiXRes,
-      unsigned int uiYRes,
-      T_Pixel Min,
-      T_Pixel Max,
-      unsigned int uiNrX,
-      unsigned int uiNrY,
-      unsigned int uiNrBins,
-      float fCliplimit
-    );
+    inline ClaheITK();
+    inline ~ClaheITK();
     
-    inline int wrapedExecute
-    (
-      T_Pixel* pImage,
-      unsigned int uiXRes,
-      unsigned int uiYRes,
-      T_Pixel Min,
-      T_Pixel Max,
-      unsigned int uiNrX,
-      unsigned int uiNrY,
-      unsigned int uiNrBins,
-      float fCliplimit
-    );
+    inline void SetInput(T_ItkImagePointer pInput);
+    inline typename T_ItkImage::Pointer GetOutput();
+    inline void Update();
     
+    inline void setGrayLevelMin(T_Pixel nMin);
+    inline void setGrayLevelMax(T_Pixel nMax);
+    inline void setNbRegionsX(unsigned int uiNrX);
+    inline void setNbRegionsY(unsigned int uiNrY);
+    inline void setNbBins(unsigned int uiNrBins);
+    inline void setCliplimit(float fCliplimit);
+    inline void setAutoAdaptToNbRegions(bool bAutoAdaptToNbRegions);
+    
+    inline T_Pixel getGrayLevelMin() const;
+    inline T_Pixel getGrayLevelMax() const;
+    inline unsigned int getNbRegionsX() const;
+    inline unsigned int getNbRegionsY() const;
+    inline unsigned int getNbBins() const;
+    inline float getCliplimit() const;
+    inline bool getAutoAdaptToNbRegions() const;
+  
   private:
+  
+    inline void _execute(T_ItkImagePointer pImage);
+    
+    inline int _execute
+    (
+      T_Pixel* pImage,
+      unsigned int uiXRes,
+      unsigned int uiYRes,
+      T_Pixel Min,
+      T_Pixel Max,
+      unsigned int uiNrX,
+      unsigned int uiNrY,
+      unsigned int uiNrBins,
+      float fCliplimit
+    );
+    
+    inline int _wrapedExecute
+    (
+      T_Pixel* pImage,
+      unsigned int uiXRes,
+      unsigned int uiYRes,
+      T_Pixel Min,
+      T_Pixel Max,
+      unsigned int uiNrX,
+      unsigned int uiNrY,
+      unsigned int uiNrBins,
+      float fCliplimit
+    );
     
     inline void _clipHistogram
     (
@@ -156,57 +184,6 @@ class ClaheImpl
       unsigned int nExp
     );
     
-  private:
-    
-    /* max. # contextual regions in x-direction */
-    static const unsigned int uiMAX_REG_X = 16;
-    
-    /* max. # contextual regions in y-direction */
-    static const unsigned int uiMAX_REG_Y = 16;
-};
-
-
-
-/**
-  Applies Clahe to an ITK image to produce another image.
-*/
-template<typename T_ItkImage>
-class ClaheITK
-{
-  public:
-    
-    typedef typename T_ItkImage::PixelType T_Pixel;
-    typedef typename T_ItkImage::Pointer T_ItkImagePointer;
-    typedef typename T_ItkImage::RegionType T_RegionType;
-    typedef typename T_ItkImage::SizeType T_SizeType;
-    
-    inline ClaheITK();
-    inline ~ClaheITK();
-    
-    inline void SetInput(T_ItkImagePointer pInput);
-    inline typename T_ItkImage::Pointer GetOutput();
-    inline void Update();
-    
-    inline void setGrayLevelMin(T_Pixel nMin);
-    inline void setGrayLevelMax(T_Pixel nMax);
-    inline void setNbRegionsX(unsigned int uiNrX);
-    inline void setNbRegionsY(unsigned int uiNrY);
-    inline void setNbBins(unsigned int uiNrBins);
-    inline void setCliplimit(float fCliplimit);
-    inline void setAutoAdaptToNbRegions(bool bAutoAdaptToNbRegions);
-    
-    inline T_Pixel getGrayLevelMin() const;
-    inline T_Pixel getGrayLevelMax() const;
-    inline unsigned int getNbRegionsX() const;
-    inline unsigned int getNbRegionsY() const;
-    inline unsigned int getNbBins() const;
-    inline float getCliplimit() const;
-    inline bool getAutoAdaptToNbRegions() const;
-    
-    inline void execute(T_ItkImagePointer pImage);
-  
-  private:
-  
     inline T_Pixel* _fromItkToFlatArray
     (
       T_ItkImagePointer pImage,
@@ -226,7 +203,7 @@ class ClaheITK
     typedef itk::ImportImageFilter<T_Pixel, 2> T_ImportFilter;
   
   private:
-    
+  
     T_Pixel _nMin;
     T_Pixel _nMax;
     unsigned int _uiNrX;
@@ -237,25 +214,23 @@ class ClaheITK
     T_ItkImagePointer _pInput;
     
     T_Pixel* _pFlatImage;
-    ClaheImpl<T_Pixel> _oClaheImpl;
     typename T_ImportFilter::Pointer _pImportFilter;
+  
+  private:
+  
+    /* max. # contextual regions in x-direction */
+    static const unsigned int uiMAX_REG_X = 16;
+    
+    /* max. # contextual regions in y-direction */
+    static const unsigned int uiMAX_REG_Y = 16;
 };
 
 
 
 /**
-  Useless ctor!
 */
-template<typename T_Pixel>
-inline ClaheImpl<T_Pixel>::ClaheImpl()
-{
-}
-
-
-/**
-*/
-template<typename T_Pixel>
-inline int ClaheImpl<T_Pixel>::wrapedExecute
+template<typename T_ItkImage>
+inline int ClaheITK<T_ItkImage>::_wrapedExecute
 (
   T_Pixel* pImage,
   unsigned int uiXRes,
@@ -376,7 +351,7 @@ inline int ClaheImpl<T_Pixel>::wrapedExecute
   //
   // -3- Apply CLAHE algorithm
   //
-  int nReturnCode = execute
+  int nReturnCode = _execute
                     (
                       pImageNew,
                       nNewWidth,
@@ -463,8 +438,9 @@ inline int ClaheImpl<T_Pixel>::wrapedExecute
   \param fCliplimit Normalized cliplimit (higher values give more contrast)
   \return An error code, 0 meaning no error.
 */
-template<typename T_Pixel>
-inline int ClaheImpl<T_Pixel>::execute
+
+template<typename T_ItkImage>
+inline int ClaheITK<T_ItkImage>::_execute
 (
   T_Pixel* pImage,
   unsigned int uiXRes,
@@ -665,10 +641,11 @@ inline int ClaheImpl<T_Pixel>::execute
 
 /**
   Compute the integral power of an integral base.
-  FIXME: Use so math lib for this!
+  FIXME: Use some math lib for this!
 */
-template<typename T_Pixel>
-inline unsigned int ClaheImpl<T_Pixel>::_pow
+
+template<typename T_ItkImage>
+inline unsigned int ClaheITK<T_ItkImage>::_pow
 (
   unsigned int nBase,
   unsigned int nExp
@@ -703,8 +680,8 @@ inline unsigned int ClaheImpl<T_Pixel>::_pow
   \param ulClipLimit The clip limit or, equivalently, the maximum slope of the
     cumulative histogram.
 */
-template<typename T_Pixel>
-inline void ClaheImpl<T_Pixel>::_clipHistogram
+template<typename T_ItkImage>
+inline void ClaheITK<T_ItkImage>::_clipHistogram
 (
   unsigned long* pulHistogram,
   unsigned int uiNrGreylevels,
@@ -819,8 +796,8 @@ inline void ClaheImpl<T_Pixel>::_clipHistogram
   \param pLookupTable The look up table. The index is a pixel input value and
            the value is the corresponding bin number in the histogram.
 */
-template<typename T_Pixel>
-inline void ClaheImpl<T_Pixel>::_makeHistogram
+template<typename T_ItkImage>
+inline void ClaheITK<T_ItkImage>::_makeHistogram
 (
   T_Pixel* pImage,
   unsigned int uiXRes,
@@ -909,8 +886,8 @@ inline void ClaheImpl<T_Pixel>::_makeHistogram
   \param uiNrGreylevels The number of bins in the histogram.
   \param ulNrOfPixels The complete number of pixels in the image
 */
-template<typename T_Pixel>
-inline void ClaheImpl<T_Pixel>::_mapHistogram
+template<typename T_ItkImage>
+inline void ClaheITK<T_ItkImage>::_mapHistogram
 (
   unsigned long* pulHistogram,
   T_Pixel Min,
@@ -974,8 +951,8 @@ inline void ClaheImpl<T_Pixel>::_mapHistogram
   \param nMax Desired maximum grey value.
   \param uiNrBins Desired number of bins.
 */
-template<typename T_Pixel>
-inline void ClaheImpl<T_Pixel>::_makeLut
+template<typename T_ItkImage>
+inline void ClaheITK<T_ItkImage>::_makeLut
 (
   unsigned int* pLUT,
   T_Pixel nMin,
@@ -1070,8 +1047,8 @@ inline void ClaheImpl<T_Pixel>::_makeLut
   \param uiYSize Height of the region
   \param pLUT lookup table containing mapping greyvalues to bins
 */
-template<typename T_Pixel>
-inline void ClaheImpl<T_Pixel>::_interpolate
+template<typename T_ItkImage>
+inline void ClaheITK<T_ItkImage>::_interpolate
 (
   T_Pixel* pImage,
   unsigned int uiXRes,
@@ -1201,7 +1178,6 @@ inline ClaheITK<T_ItkImage>::ClaheITK()
     _bAutoAdaptToNbRegions(true),
     _pInput(NULL),
     _pFlatImage(NULL),
-    _oClaheImpl(),
     _pImportFilter()
 {
   _pImportFilter = T_ImportFilter::New();
@@ -1246,7 +1222,7 @@ template<typename T_ItkImage>
 inline void ClaheITK<T_ItkImage>::Update()
 {
   assert(_pInput.GetPointer() != NULL);
-  this->execute(_pInput);
+  this->_execute(_pInput);
   //_pImportFilter->Update();
 }
 
@@ -1255,7 +1231,7 @@ inline void ClaheITK<T_ItkImage>::Update()
   Executes Clahe image processing.
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::execute(T_ItkImagePointer pImage)
+inline void ClaheITK<T_ItkImage>::_execute(T_ItkImagePointer pImage)
 {
   //
   // -1- Translate from ITK to flat array
@@ -1280,7 +1256,7 @@ inline void ClaheITK<T_ItkImage>::execute(T_ItkImagePointer pImage)
   int nErrCode = 0;
   if (_bAutoAdaptToNbRegions)
   {
-    nErrCode = _oClaheImpl.wrapedExecute
+    nErrCode = _wrapedExecute
     (
       _pFlatImage, uiXRes, uiYRes, _nMin, _nMax, _uiNrX, _uiNrY,
       _uiNrBins, _fCliplimit
@@ -1288,7 +1264,7 @@ inline void ClaheITK<T_ItkImage>::execute(T_ItkImagePointer pImage)
   }
   else
   {
-    nErrCode = _oClaheImpl.execute
+    nErrCode = _execute
     (
       _pFlatImage, uiXRes, uiYRes, _nMin, _nMax, _uiNrX, _uiNrY,
       _uiNrBins, _fCliplimit
