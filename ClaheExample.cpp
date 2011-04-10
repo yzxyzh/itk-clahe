@@ -48,7 +48,7 @@ int main( int argc, char * argv[] )
   typedef itk::Image<InputPixelType, 2> InputImageType;
   typedef itk::Image<OutputPixelType, 2> OutputImageType;
   typedef itk::ImageFileReader<InputImageType>  ReaderType;
-  typedef ClaheITK<InputImageType> FilterType;
+  typedef ClaheImageFilter<InputImageType> FilterType;
   
   FilterType* pFilter = new FilterType();
   

@@ -1,9 +1,9 @@
 /**
-  \file clahe.h
+  \file ClaheImageFilter.h
   \date 8 april 2011
   \author Francis Girard
   
-  Copyright (C) 2010 Francis Girard
+  Copyright (C) 2011 Francis Girard
   
   GNU LESSER GENERAL PUBLIC LICENSE
   Version 3, 29 June 2007
@@ -70,8 +70,8 @@
   
 */
 
-#ifndef __clahe_h__
-#define __clahe_h__
+#ifndef __ClaheImageFilter_h__
+#define __ClaheImageFilter_h__
 
 #include <math.h>
 #include "itkImage.h"
@@ -82,7 +82,7 @@
   Applies Clahe to an ITK image to produce another image.
 */
 template<typename T_ItkImage>
-class ClaheITK
+class ClaheImageFilter
 {
   public:
     
@@ -91,8 +91,8 @@ class ClaheITK
     typedef typename T_ItkImage::RegionType T_RegionType;
     typedef typename T_ItkImage::SizeType T_SizeType;
     
-    inline ClaheITK();
-    inline ~ClaheITK();
+    inline ClaheImageFilter();
+    inline ~ClaheImageFilter();
     
     inline void SetInput(T_ItkImagePointer pInput);
     inline typename T_ItkImage::Pointer GetOutput();
@@ -243,7 +243,7 @@ class ClaheITK
 /**
 */
 template<typename T_ItkImage>
-inline int ClaheITK<T_ItkImage>::_wrapedExecute
+inline int ClaheImageFilter<T_ItkImage>::_wrapedExecute
 (
   T_Pixel* pImage,
   unsigned int uiXRes,
@@ -453,7 +453,7 @@ inline int ClaheITK<T_ItkImage>::_wrapedExecute
 */
 
 template<typename T_ItkImage>
-inline int ClaheITK<T_ItkImage>::_execute
+inline int ClaheImageFilter<T_ItkImage>::_execute
 (
   T_Pixel* pImage,
   unsigned int uiXRes,
@@ -662,7 +662,7 @@ inline int ClaheITK<T_ItkImage>::_execute
 */
 
 template<typename T_ItkImage>
-inline unsigned int ClaheITK<T_ItkImage>::_pow
+inline unsigned int ClaheImageFilter<T_ItkImage>::_pow
 (
   unsigned int nBase,
   unsigned int nExp
@@ -679,10 +679,6 @@ inline unsigned int ClaheITK<T_ItkImage>::_pow
 
 
 /**
-  FIXME: This will spin forever for very small values of the clipping limit,
-         that is when there is a lot of pixels in excess, i.e. more to
-         redistribute than available space ...
-  
   Performs clipping of the histogram and redistribution of bins.
   The histogram is clipped and the number of excess pixels is counted.
   Afterwards the excess pixels are equally redistributed across the whole
@@ -698,7 +694,7 @@ inline unsigned int ClaheITK<T_ItkImage>::_pow
     cumulative histogram.
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::_clipHistogram
+inline void ClaheImageFilter<T_ItkImage>::_clipHistogram
 (
   unsigned long* pulHistogram,
   unsigned int uiNrGreylevels,
@@ -825,7 +821,7 @@ inline void ClaheITK<T_ItkImage>::_clipHistogram
            the value is the corresponding bin number in the histogram.
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::_makeHistogram
+inline void ClaheImageFilter<T_ItkImage>::_makeHistogram
 (
   T_Pixel* pImage,
   unsigned int uiXRes,
@@ -921,7 +917,7 @@ inline void ClaheITK<T_ItkImage>::_makeHistogram
   \param ulNrOfPixels The complete number of pixels in the image
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::_mapHistogram
+inline void ClaheImageFilter<T_ItkImage>::_mapHistogram
 (
   unsigned long* pulHistogram,
   T_Pixel Min,
@@ -986,7 +982,7 @@ inline void ClaheITK<T_ItkImage>::_mapHistogram
   \param uiNrBins Desired number of bins.
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::_makeLut
+inline void ClaheImageFilter<T_ItkImage>::_makeLut
 (
   unsigned int* pLUT,
   T_Pixel nMin,
@@ -1082,7 +1078,7 @@ inline void ClaheITK<T_ItkImage>::_makeLut
   \param pLUT lookup table containing mapping greyvalues to bins
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::_interpolate
+inline void ClaheImageFilter<T_ItkImage>::_interpolate
 (
   T_Pixel* pImage,
   unsigned int uiXRes,
@@ -1202,7 +1198,7 @@ inline void ClaheITK<T_ItkImage>::_interpolate
   Default ctor.
 */
 template<typename T_ItkImage>
-inline ClaheITK<T_ItkImage>::ClaheITK()
+inline ClaheImageFilter<T_ItkImage>::ClaheImageFilter()
   : _nMin(0),
     _nMax( (T_Pixel) -1),
     _uiNrX(8),
@@ -1222,7 +1218,7 @@ inline ClaheITK<T_ItkImage>::ClaheITK()
   Dtor.
 */
 template<typename T_ItkImage>
-inline ClaheITK<T_ItkImage>::~ClaheITK()
+inline ClaheImageFilter<T_ItkImage>::~ClaheImageFilter()
 {
   free(_pFlatImage);
 }
@@ -1232,7 +1228,7 @@ inline ClaheITK<T_ItkImage>::~ClaheITK()
   Set input image source.
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::SetInput(T_ItkImagePointer pInput)
+inline void ClaheImageFilter<T_ItkImage>::SetInput(T_ItkImagePointer pInput)
 {
   this->_pInput = pInput;
 }
@@ -1242,7 +1238,7 @@ inline void ClaheITK<T_ItkImage>::SetInput(T_ItkImagePointer pInput)
   Get the output image.
 */
 template<typename T_ItkImage>
-inline typename T_ItkImage::Pointer ClaheITK<T_ItkImage>::GetOutput()
+inline typename T_ItkImage::Pointer ClaheImageFilter<T_ItkImage>::GetOutput()
 {
   assert(_pInput.GetPointer() != NULL);
   return _pImportFilter->GetOutput();
@@ -1253,7 +1249,7 @@ inline typename T_ItkImage::Pointer ClaheITK<T_ItkImage>::GetOutput()
   Update the image processing.
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::Update()
+inline void ClaheImageFilter<T_ItkImage>::Update()
 {
   assert(_pInput.GetPointer() != NULL);
   this->_execute(_pInput);
@@ -1265,7 +1261,7 @@ inline void ClaheITK<T_ItkImage>::Update()
   Executes Clahe image processing.
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::_execute(T_ItkImagePointer pImage)
+inline void ClaheImageFilter<T_ItkImage>::_execute(T_ItkImagePointer pImage)
 {
   //
   // -1- Translate from ITK to flat array
@@ -1322,7 +1318,7 @@ inline void ClaheITK<T_ItkImage>::_execute(T_ItkImagePointer pImage)
   Output gray values shall be rescaled in nMin:nMax
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::setGrayLevelMin(T_Pixel nMin)
+inline void ClaheImageFilter<T_ItkImage>::setGrayLevelMin(T_Pixel nMin)
 {
   _nMin = nMin;
 }
@@ -1334,7 +1330,7 @@ inline void ClaheITK<T_ItkImage>::setGrayLevelMin(T_Pixel nMin)
   Output gray values shall be rescaled in nMin:nMax
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::setGrayLevelMax(T_Pixel nMax)
+inline void ClaheImageFilter<T_ItkImage>::setGrayLevelMax(T_Pixel nMax)
 {
   _nMax = nMax;
 }
@@ -1344,7 +1340,7 @@ inline void ClaheITK<T_ItkImage>::setGrayLevelMax(T_Pixel nMax)
   Set the number of regions along which to divide the image along the X direction.
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::setNbRegionsX(unsigned int uiNrX)
+inline void ClaheImageFilter<T_ItkImage>::setNbRegionsX(unsigned int uiNrX)
 {
   _uiNrX = uiNrX;
 }
@@ -1354,7 +1350,7 @@ inline void ClaheITK<T_ItkImage>::setNbRegionsX(unsigned int uiNrX)
   Set the number of regions along which to divide the image along the Y direction.
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::setNbRegionsY(unsigned int uiNrY)
+inline void ClaheImageFilter<T_ItkImage>::setNbRegionsY(unsigned int uiNrY)
 {
   _uiNrY = uiNrY;
 }
@@ -1366,7 +1362,7 @@ inline void ClaheITK<T_ItkImage>::setNbRegionsY(unsigned int uiNrY)
   Should of course be less than the number of pixels in a region.
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::setNbBins(unsigned int uiNrBins)
+inline void ClaheImageFilter<T_ItkImage>::setNbBins(unsigned int uiNrBins)
 {
   _uiNrBins = uiNrBins;
 }
@@ -1377,7 +1373,7 @@ inline void ClaheITK<T_ItkImage>::setNbBins(unsigned int uiNrBins)
   cumulative histogram.
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::setCliplimit(float fCliplimit)
+inline void ClaheImageFilter<T_ItkImage>::setCliplimit(float fCliplimit)
 {
   _fCliplimit = fCliplimit;
 }
@@ -1391,7 +1387,7 @@ inline void ClaheITK<T_ItkImage>::setCliplimit(float fCliplimit)
   number of regions along the Y axis.
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::setAutoAdaptToNbRegions
+inline void ClaheImageFilter<T_ItkImage>::setAutoAdaptToNbRegions
 (
   bool bAutoAdaptToNbRegions
 )
@@ -1406,8 +1402,8 @@ inline void ClaheITK<T_ItkImage>::setAutoAdaptToNbRegions
   Output gray values shall be rescaled in nMin:nMax
 */
 template<typename T_ItkImage>
-inline typename ClaheITK<T_ItkImage>::T_Pixel
-ClaheITK<T_ItkImage>::getGrayLevelMin() const
+inline typename ClaheImageFilter<T_ItkImage>::T_Pixel
+ClaheImageFilter<T_ItkImage>::getGrayLevelMin() const
 {
   return _nMin;
 }
@@ -1419,8 +1415,8 @@ ClaheITK<T_ItkImage>::getGrayLevelMin() const
   Output gray values shall be rescaled in nMin:nMax
 */
 template<typename T_ItkImage>
-inline typename ClaheITK<T_ItkImage>::T_Pixel
-ClaheITK<T_ItkImage>::getGrayLevelMax() const
+inline typename ClaheImageFilter<T_ItkImage>::T_Pixel
+ClaheImageFilter<T_ItkImage>::getGrayLevelMax() const
 {
   return _nMax;
 }
@@ -1430,7 +1426,7 @@ ClaheITK<T_ItkImage>::getGrayLevelMax() const
   Get the number of regions along which to divide the image along the X direction.
 */
 template<typename T_ItkImage>
-inline unsigned int ClaheITK<T_ItkImage>::getNbRegionsX() const
+inline unsigned int ClaheImageFilter<T_ItkImage>::getNbRegionsX() const
 {
   return _uiNrX;
 }
@@ -1440,7 +1436,7 @@ inline unsigned int ClaheITK<T_ItkImage>::getNbRegionsX() const
   Get the number of regions along which to divide the image along the Y direction.
 */
 template<typename T_ItkImage>
-inline unsigned int ClaheITK<T_ItkImage>::getNbRegionsY() const
+inline unsigned int ClaheImageFilter<T_ItkImage>::getNbRegionsY() const
 {
   return _uiNrY;
 }
@@ -1452,7 +1448,7 @@ inline unsigned int ClaheITK<T_ItkImage>::getNbRegionsY() const
   Should of course be less than the number of pixels in a region.
 */
 template<typename T_ItkImage>
-inline unsigned int ClaheITK<T_ItkImage>::getNbBins() const
+inline unsigned int ClaheImageFilter<T_ItkImage>::getNbBins() const
 {
   return _uiNrBins;
 }
@@ -1463,7 +1459,7 @@ inline unsigned int ClaheITK<T_ItkImage>::getNbBins() const
   cumulative histogram.
 */
 template<typename T_ItkImage>
-inline float ClaheITK<T_ItkImage>::getCliplimit() const
+inline float ClaheImageFilter<T_ItkImage>::getCliplimit() const
 {
   return _fCliplimit;
 }
@@ -1477,7 +1473,7 @@ inline float ClaheITK<T_ItkImage>::getCliplimit() const
   number of regions along the Y axis.
 */
 template<typename T_ItkImage>
-inline bool ClaheITK<T_ItkImage>::getAutoAdaptToNbRegions() const
+inline bool ClaheImageFilter<T_ItkImage>::getAutoAdaptToNbRegions() const
 {
   return _bAutoAdaptToNbRegions;
 }
@@ -1492,7 +1488,7 @@ inline bool ClaheITK<T_ItkImage>::getAutoAdaptToNbRegions() const
   \return A smart pointer to the newly created 
 */
 template<typename T_ItkImage>
-inline void ClaheITK<T_ItkImage>::_fromFlatArrayToItk
+inline void ClaheImageFilter<T_ItkImage>::_fromFlatArrayToItk
 (
   T_Pixel* pFlatImage,
   const T_SizeType& roImgSize,
@@ -1523,8 +1519,8 @@ inline void ClaheITK<T_ItkImage>::_fromFlatArrayToItk
           responsibility of the caller to eventually deallocate this memory.
 */
 template<typename T_ItkImage>
-inline typename ClaheITK<T_ItkImage>::T_Pixel*
-ClaheITK<T_ItkImage>::_fromItkToFlatArray
+inline typename ClaheImageFilter<T_ItkImage>::T_Pixel*
+ClaheImageFilter<T_ItkImage>::_fromItkToFlatArray
 (
   T_ItkImagePointer pImage,
   const T_RegionType& roRegion,
@@ -1546,6 +1542,6 @@ ClaheITK<T_ItkImage>::_fromItkToFlatArray
 }
 
 
-// #define __clahe_h__
+// #define __ClaheImageFilter_h__
 #endif
 
