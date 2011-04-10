@@ -53,7 +53,21 @@
   
   Author: Karel Zuiderveld, Computer Vision Research Group,
           Utrecht, The Netherlands (karel@cv.ruu.nl)
-
+  
+  
+  
+  But ACM website gives the following copyright sentence :
+  (http://tog.acm.org/resources/GraphicsGems/)
+  
+  EULA: The Graphics Gems code is copyright-protected. In other words, you
+  cannot  claim the text of the code as your own and resell it. Using the code
+  is permitted  in any program, product, or library, non-commercial or
+  commercial. Giving credit  is not required, though is a nice gesture. The code
+  comes as-is, and if there are  any flaws or problems with any Gems code,
+  nobody involved with Gems - authors,  editors, publishers, or webmasters - are
+  to be held responsible. Basically, don't be a jerk, and remember that anything
+  free comes with no guarantee. 
+  
 */
 
 #ifndef __clahe_h__
@@ -144,7 +158,6 @@ class ClaheITK
       unsigned int uiSizeX,
       unsigned int uiSizeY,
       unsigned long* pulHistogram,
-      unsigned int uiNrGreylevels,
       unsigned int* pLookupTable
     );
     
@@ -467,6 +480,7 @@ inline int ClaheITK<T_ItkImage>::_execute
   /* lookup table used for scaling of input image */
   unsigned int uiNR_OF_GREY = _pow(2, (sizeof(T_Pixel) * 8));
   unsigned int* aLUT = new unsigned int[uiNR_OF_GREY];
+  ::memset(aLUT, 0, sizeof(unsigned int)  * uiNR_OF_GREY);
   
   /* pointer to histogram and mappings*/
   unsigned long* pulHist, *pulMapArray;
@@ -487,8 +501,10 @@ inline int ClaheITK<T_ItkImage>::_execute
   assert(uiYRes % uiNrY == 0);
   /* maximum too large */
   assert(Max < uiNR_OF_GREY);
+  
   /* minimum equal or larger than maximum */
   assert(Min < Max);
+  
   /* at least 4 contextual regions required */
   assert(uiNrX >= 2 && uiNrY >= 2);
   /* is OK, immediately returns original image. */
@@ -496,7 +512,7 @@ inline int ClaheITK<T_ItkImage>::_execute
   /* default value when not specified */
   assert(uiNrBins > 0);
   /* Number of gray values must be a greater or equal to the number of bins. */
-  assert((1 + (Max - Min)) >= uiNrBins);
+  //assert((1 + (Max - Min)) >= uiNrBins);
   
   
 #if 0
@@ -546,7 +562,9 @@ inline int ClaheITK<T_ItkImage>::_execute
   }
   
   
-  /* Make lookup table for mapping of greyvalues */
+  //
+  // Make lookup table for mapping of greyvalues
+  //
   _makeLut(aLUT, Min, Max, uiNrBins);
   
   /* Calculate greylevel mappings for each contextual region */
@@ -556,14 +574,13 @@ inline int ClaheITK<T_ItkImage>::_execute
     {
       pulHist = &pulMapArray[uiNrBins * (uiY * uiNrX + uiX)];
       _makeHistogram(pImPointer, uiXRes, uiXSize, uiYSize,
-                     pulHist, uiNrBins, aLUT);
+                     pulHist, aLUT);
       _clipHistogram(pulHist, uiNrBins, ulClipLimit);
       _mapHistogram(pulHist, Min, Max, uiNrBins, ulNrPixels);
     }
     /* skip lines, set pointer */
     pImPointer += (uiYSize - 1) * uiXRes;
   }
-  
   
   /* Interpolate greylevel mappings to get CLAHE image */
   for (pImPointer = pImage, uiY = 0; uiY <= uiNrY; uiY++)
@@ -688,91 +705,102 @@ inline void ClaheITK<T_ItkImage>::_clipHistogram
   unsigned long ulClipLimit
 )
 {
-  unsigned long* pulBinPointer, *pulEndPointer, *pulHisto;
-  unsigned long ulNrExcess, ulUpper, ulBinIncr, ulStepSize;
-  long lBinExcess;
+  unsigned long* pulBinPointer = pulHistogram;
+  unsigned long* pulEndPointer = pulHistogram + uiNrGreylevels;
+  unsigned long* pulHisto = pulHistogram;
   
-  /* calculate total number of excess pixels */
-  ulNrExcess = 0; 
-  pulBinPointer = pulHistogram;
-  unsigned int nIdx = 0;
-  for ( ; nIdx < uiNrGreylevels; nIdx++)
+  unsigned long ulNrExcess = 0;
+  unsigned long ulUpper;
+  unsigned long ulBinRedistributeAvg;
+  
+  //
+  // First, clip and compute the number of clipped pixels that we will need to
+  // redistribute.
+  //
+  unsigned long nNbBinsClipped = 0;
+  for ( ; pulHisto < pulEndPointer; pulHisto++)
   {
-    lBinExcess = (long) pulBinPointer[nIdx] - (long) ulClipLimit;
-    if (lBinExcess > 0) ulNrExcess += lBinExcess;	  /* excess in current bin */
-  }
-  
-  /* Second part: clip histogram and redistribute excess pixels in each bin */
-  ulBinIncr = ulNrExcess / uiNrGreylevels;
-      /* average binincrement */
-      /* This will be our first approximation for redistribution */
-  ulUpper =  ulClipLimit - ulBinIncr;
-      /* Bins in between ulClipLimit and ulUpper will be set to cliplimit */
-  
-  nIdx = 0;
-  for ( ; nIdx < uiNrGreylevels; nIdx++)
-  {
-    if (pulHistogram[nIdx] > ulClipLimit)
+    if (*pulHisto > ulClipLimit)
     {
-      /* clip bin */
-      pulHistogram[nIdx] = ulClipLimit;
-    }
-    else
-    {
-      if (pulHistogram[nIdx] > ulUpper)
-      {
-        /* high bin count */
-        /* Everything in between clip limit and "upper" is given less than */
-        /* than average so that we do not fill the bin to more than clip */
-        /* limit which would not make sense. But we do give enough to reach */
-        /* out the clip limit. */
-	      ulNrExcess -= pulHistogram[nIdx] - ulUpper;
-        pulHistogram[nIdx] = ulClipLimit;
-      }
-      else
-      {
-        /* low bin count */
-        /* We give this guy the average */
-	      ulNrExcess -= ulBinIncr;
-        pulHistogram[nIdx] += ulBinIncr;
-      }
+      ulNrExcess += (long) (*pulHisto) - (long) ulClipLimit;
+      *pulHisto = ulClipLimit;
+      nNbBinsClipped++;
     }
   }
   
-  /* Finally, Redistribute remaining excess  */
-  while (ulNrExcess)
+  //
+  // First redistribution.
+  // We give average of what is to redistribute to everybody or less than
+  // average if that would make the bin number over the clip limit.
+  //
+  
+  // Average bin increment
+  ulBinRedistributeAvg = ulNrExcess / uiNrGreylevels;
+  // Bins in between ulClipLimit and ulUpper will be set to cliplimit
+  ulUpper =  ulClipLimit - ulBinRedistributeAvg;
+  if (ulBinRedistributeAvg)
   {
-    pulEndPointer = &pulHistogram[uiNrGreylevels];
+    unsigned long nHisto;
     pulHisto = pulHistogram;
-    
-    while (ulNrExcess && pulHisto < pulEndPointer)
+    for ( ; pulHisto < pulEndPointer; pulHisto++)
     {
-      /* If number in excess is less than the number of bins, we must skip */
-      /* some bins. */
-      ulStepSize = uiNrGreylevels / ulNrExcess;
-	    if (ulStepSize < 1)
+      nHisto = *pulHisto;
+      if (nHisto < ulClipLimit)
       {
-        /* stepsize at least 1 */
-        ulStepSize = 1;
-      }
-      
-      /* Actual redistribution */
-	    for ( pulBinPointer=pulHisto;
-            pulBinPointer < pulEndPointer && ulNrExcess;
-            pulBinPointer += ulStepSize)
-      {
-        if (*pulBinPointer < ulClipLimit)
+        if (nHisto > ulUpper)
         {
-          (*pulBinPointer)++;	
-          ulNrExcess--; /* reduce excess */
+          // 
+          // High bin count
+          // Everything in between clip limit and "upper" is given less than
+          // average so that we do not fill the bin to more than clip limit which
+          // would not make sense. But we do give enough to reach out the clip
+          // limit.
+          // 
+          ulNrExcess -= nHisto - ulUpper;
+          *pulHisto = ulClipLimit;
+        }
+        else
+        {
+          //
+          // Low bin count
+          // We give this guy the average
+          //
+          ulNrExcess -= ulBinRedistributeAvg;
+          *pulHisto += ulBinRedistributeAvg;
         }
       }
-      
-      /* Restart redistributing on other bin location. Yes but why ? */
-	    pulHisto++;
     }
   }
   
+  //
+  // Second redistribution.
+  // We start by pixels with the greatest intensity to favour them a little
+  // and resdistribute up to clip limit to each of the bin going down to
+  // those with less intenssity. We resdistribute as long as there is something
+  // to redistribute.
+  //
+  if (ulNrExcess)
+  {
+    pulHisto = pulEndPointer - 1;
+    for ( ; pulHisto > pulHistogram - 1; pulHisto--)
+    {
+      if (*pulHisto < ulClipLimit)
+      {
+        unsigned long nNbRedistributedHere = ulClipLimit - *pulHisto;
+        if (nNbRedistributedHere >= ulNrExcess)
+        {
+          // Nothing else to redistribute
+          *pulHisto += ulNrExcess;
+          break;
+        }
+        else
+        {
+          ulNrExcess -= nNbRedistributedHere;
+          *pulHisto += nNbRedistributedHere;
+        }
+      }
+    }
+  }
 }
 
 
@@ -804,7 +832,6 @@ inline void ClaheITK<T_ItkImage>::_makeHistogram
 	unsigned int uiSizeX,
   unsigned int uiSizeY,
 	unsigned long* pulHistogram,
-	unsigned int uiNrGreylevels,
   unsigned int* pLookupTable
 )
 {
@@ -815,8 +842,9 @@ inline void ClaheITK<T_ItkImage>::_makeHistogram
   /* Not useful anymore. It is initialized from outside. */
   /* for (i = 0; i < uiNrGreylevels; i++) */
   /*  pulHistogram[i] = 0L; */
-  
+
 #if 0
+
   for ( ; nIdx < uiSizeY; nIdx++)
   {
     /* Points to the end of the current row for this region (one past the last one) */
@@ -840,8 +868,9 @@ inline void ClaheITK<T_ItkImage>::_makeHistogram
     */
     pImage += (uiXRes - uiSizeX);
   }
-#endif
-  
+
+#else
+
   /*
     Optimization :
     
@@ -861,11 +890,16 @@ inline void ClaheITK<T_ItkImage>::_makeHistogram
   {
     pImagePointer = &pImage[uiSizeX];
     while (pImage < pImagePointer)
+    {
       pulHistogram[pLookupTable[*pImage++]]++;
+    }
     if (pImage == pImageEnd)
       break;
     pImage += uiInc;
   }
+
+#endif
+
 }
 
 
